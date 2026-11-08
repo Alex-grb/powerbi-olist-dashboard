@@ -1,0 +1,51 @@
+-- 1. Базовые меры
+Выручка = SUM(Olist_Data[price])
+
+Кол-во заказов = COUNTROWS(Olist_Data)
+
+Средний чек = DIVIDE([Выручка], [Кол-во заказов])
+
+Средний срок доставки = AVERAGE(Olist_Data[delivery_days])
+
+
+-- 2. Меры для работы со временем (Time Intelligence)
+Выручка ПМ = 
+CALCULATE(
+    [Выручка], 
+    DATEADD('Календарь'[Date], -1, MONTH)
+)
+
+Выручка за прошлый год = 
+CALCULATE(
+    [Выручка],
+    SAMEPERIODLASTYEAR('Календарь'[Date])
+)
+
+Выручка YTD = 
+TOTALYTD(
+    [Выручка],
+    'Календарь'[Date]
+)
+
+Прирост MoM % = 
+VAR Prev = [Выручка ПМ]
+RETURN
+IF(
+    Prev = 0 || Prev < 1,
+    BLANK(),
+    DIVIDE([Выручка] - Prev, Prev)
+)
+
+
+-- 3. Создание таблицы Календаря
+Календарь = 
+VAR MinDate = MIN(Olist_Data[order_date])
+VAR MaxDate = MAX(Olist_Data[order_date])
+RETURN
+ADDCOLUMNS(
+    CALENDAR(MinDate, MaxDate),
+    "Год", YEAR([Date]),
+    "Месяц", MONTH([Date]),
+    "ГодМесяц", FORMAT([Date], "YYYY-MM"),
+    "НазваниеМесяца", FORMAT([Date], "MMMM")
+)
